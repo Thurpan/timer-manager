@@ -6,7 +6,7 @@
 2. Read `docs/project-brief.md` for the product requirements and open decisions.
 3. Inspect the current repository before proposing or changing an implementation.
 
-This is Timer Manager, a lightweight local Windows app for managing multiple countdown timers. The initial repository contains documentation only.
+This is Timer Manager, a local Windows app for managing multiple countdown timers. It uses C# and WPF on .NET 10, with a separate timer engine and automated tests.
 
 ## Working approach
 
@@ -34,14 +34,14 @@ This is Timer Manager, a lightweight local Windows app for managing multiple cou
 
 ## Implementation guidance
 
-- No language, framework, storage format or packaging method has been selected. Do not assume Codex is an application framework.
-- When implementation is requested, choose the simplest practical stack that supports Windows tray behaviour, desktop notifications, sound and durable local state.
+- Preserve the selected C#/WPF stack, versioned JSON storage and portable Windows x64 packaging unless a requested change requires otherwise.
+- Use Windows App SDK Foundation for local notifications and Windows Forms for the tray icon. Do not add a web runtime or backend.
 - In the default mode, derive remaining time from the saved finish time. A periodic UI refresh must not be the only record of elapsed time.
 - Keep timing and persistence logic separate enough from the interface to verify them reliably, without creating unnecessary layers.
 - Persist the data needed to recover timer names, tags, timing state and the global setting.
 - Avoid duplicate completion alerts caused by repeated display updates. Define restart and acknowledgement behaviour before relying on it.
 - Do not add accounts, cloud sync, a backend, subscriptions or unrelated productivity features unless requested.
-- Choose an explicit open-source licence before describing a release as licensed open source.
+- Preserve the MIT licence and dependency notices when packaging.
 
 ## Verification and reporting
 
@@ -51,3 +51,20 @@ This is Timer Manager, a lightweight local Windows app for managing multiple cou
 - Check sorting, filtering and saved data when those features are implemented.
 - Report what changed, what was checked and any remaining limitation. Do not claim the app runs or tests pass without evidence.
 - Keep setup and test commands in the README once they actually exist.
+
+## Commands and structure
+
+Use the .NET 10 SDK pinned in `global.json`. A per-user installation may require `%USERPROFILE%\.dotnet` before the system SDK on `PATH`.
+
+```powershell
+dotnet build TimerManager.slnx -c Release
+dotnet test tests/TimerManager.Tests/TimerManager.Tests.csproj -c Release
+dotnet run --project src/TimerManager.App -c Release
+.\scripts\package.ps1
+```
+
+Exit the app before rebuilding it. For diagnostic data, pass `-- --data-directory C:\Temp\TimerManager-Test` to `dotnet run`. This disables startup registration and still uses the per-user single-instance boundary.
+
+The core project owns timer transitions, storage and completion claims. The app project owns Windows integration and the interface. Tests use injected clocks; do not use real delays for core timing tests.
+
+Read `docs/validation.md` before describing platform behaviour as verified. Do not put this PC to sleep or restart it for unattended tests. Use a disposable environment or a user-controlled session.

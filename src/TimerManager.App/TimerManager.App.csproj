@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>TimerManager</AssemblyName>
+    <ApplicationIcon>Assets/timer.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TimerManager.Core/TimerManager.Core.csproj" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" Version="2.3.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" Version="2.4.0" GeneratePathProperty="true" />
+    <Content Include="Assets/timer.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!-- The stable SDK omits this resource in self-contained output. See WindowsAppSDK issue #6071. -->
+  <Target Name="ExtractNotificationVersionResource" BeforeTargets="AssignTargetPaths" Condition="'$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup><RuntimeResourceDir>$(IntermediateOutputPath)RuntimeResource-2.4.0</RuntimeResourceDir></PropertyGroup>
+    <Unzip SourceFiles="$(PkgMicrosoft_WindowsAppSDK_Runtime)/tools/MSIX/win10-x64/Microsoft.WindowsAppRuntime.2.msix"
+           DestinationFolder="$(RuntimeResourceDir)" Condition="!Exists('$(RuntimeResourceDir)/Microsoft.WindowsAppRuntime.Insights.Resource.dll')" />
+    <ItemGroup>
+      <Content Include="$(RuntimeResourceDir)/Microsoft.WindowsAppRuntime.Insights.Resource.dll" Link="Microsoft.WindowsAppRuntime.Insights.Resource.dll"
+               CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+</Project>
