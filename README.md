@@ -6,7 +6,7 @@ A local Windows app for multiple named countdown timers, with tags, tray operati
 
 The first implementation uses C# and WPF on .NET 10. Windows 11 x64 is the initial verification target. The source is licensed under [MIT](LICENSE). This repository does not publish a release or installer automatically.
 
-The app has automated timing and persistence tests. See [validation](docs/validation.md) for native checks and outstanding verification.
+Download the [v0.1.0 Windows x64 prerelease](https://github.com/Thurpan/timer-manager/releases/tag/v0.1.0). The app has automated timing and persistence tests. See [validation](docs/validation.md) for native checks and outstanding verification.
 
 ## Use the app
 
