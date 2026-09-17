@@ -64,8 +64,8 @@ public partial class MainWindow : Window
     private void Render()
     {
         var state = coordinator.Engine.Snapshot;
-        SummaryText.Text = state.Timers.Length == 0 ? "A clear space for your next task."
-            : $"{state.Timers.Count(t => t.Status == TimerStatus.Running)} running · {state.Timers.Count(t => t.Status == TimerStatus.Paused)} paused · {state.Timers.Count(t => t.Status == TimerStatus.Finished)} finished";
+        SummaryText.Visibility = state.Timers.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        SummaryText.Text = $"{state.Timers.Count(t => t.Status == TimerStatus.Running)} running · {state.Timers.Count(t => t.Status == TimerStatus.Paused)} paused · {state.Timers.Count(t => t.Status == TimerStatus.Finished)} finished";
         var tags = state.Timers.SelectMany(timer => timer.Tags).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray();
         if (!tags.SequenceEqual(displayedTags))
         {
@@ -90,8 +90,8 @@ public partial class MainWindow : Window
             else { row.Update(visible[i]); if (Rows.IndexOf(row) != i) Rows.Move(Rows.IndexOf(row), i); }
         }
         EmptyPanel.Visibility = visible.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-        EmptyTitle.Text = state.Timers.Length == 0 ? "A little room to focus." : "No matching timers.";
-        EmptySubtitle.Text = state.Timers.Length == 0 ? "Add your first timer to get started." : "Clear your tag filters to see every timer.";
+        EmptyTitle.Text = state.Timers.Length == 0 ? "No timers" : "No matching timers";
+        EmptySubtitle.Visibility = state.Timers.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private bool Execute(Action<TimerEngine> action)
@@ -164,7 +164,7 @@ public sealed class TimerRow(TimerItem timer) : INotifyPropertyChanged
     public string StatusText => item.Status switch
     {
         TimerStatus.Paused => "Paused",
-        TimerStatus.Finished => item.Acknowledged ? "Finished · dismissed" : "Finished · ready for your attention",
+        TimerStatus.Finished => item.Acknowledged ? "Finished · dismissed" : "Finished",
         _ => "Running"
     };
     public string Countdown

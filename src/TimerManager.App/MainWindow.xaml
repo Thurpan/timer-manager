@@ -1,23 +1,18 @@
 <Window x:Class="TimerManager.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Style="{StaticResource {x:Type Window}}" Title="Timer Manager" Width="960" Height="730" MinWidth="740" MinHeight="500" WindowStartupLocation="CenterScreen">
  <Grid Margin="28">
-  <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-  <Grid Margin="0,0,0,20">
-   <StackPanel><TextBlock Text="TIMER MANAGER" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
-    <TextBlock Text="Make time for what matters." FontSize="27" FontWeight="SemiBold" Margin="0,6,0,0" /></StackPanel>
-   <TextBlock Text="LOCAL · WINDOWS" Style="{StaticResource Muted}" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="10" />
-  </Grid>
-  <Border x:Name="ErrorPanel" Grid.Row="1" Visibility="Collapsed" Background="#383025" CornerRadius="5" Padding="12" Margin="0,0,0,14">
+  <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+  <Border x:Name="ErrorPanel" Visibility="Collapsed" Background="#383025" CornerRadius="5" Padding="12" Margin="0,0,0,14">
    <DockPanel><Button DockPanel.Dock="Right" Content="Dismiss message" Click="DismissError_Click" Margin="12,0,0,0" />
     <TextBlock x:Name="ErrorText" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" /></DockPanel>
   </Border>
-  <TabControl x:Name="Tabs" Grid.Row="2" Background="Transparent" BorderThickness="0" Padding="0,18,0,0">
+  <TabControl x:Name="Tabs" Grid.Row="1" Background="Transparent" BorderThickness="0" Padding="0,18,0,0">
    <TabItem Header="_Dashboard">
     <Grid>
      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
      <DockPanel Margin="0,0,0,16">
       <Button DockPanel.Dock="Right" Content="＋  Add timer" Style="{StaticResource PrimaryButton}" Click="Add_Click" AutomationProperties.AutomationId="AddTimer" />
-      <StackPanel VerticalAlignment="Center"><TextBlock Text="Your timers" FontSize="20" FontWeight="SemiBold" /><TextBlock x:Name="SummaryText" Style="{StaticResource Muted}" Margin="0,4,0,0" /></StackPanel>
+      <StackPanel VerticalAlignment="Center"><TextBlock Text="Timers" FontSize="20" FontWeight="SemiBold" /><TextBlock x:Name="SummaryText" Style="{StaticResource Muted}" Margin="0,4,0,0" /></StackPanel>
      </DockPanel>
      <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
       <TextBlock Text="SORT" Style="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center" Margin="0,0,12,0" />
@@ -50,15 +45,14 @@
        </ItemsControl>
       </ScrollViewer>
       <StackPanel x:Name="EmptyPanel" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-       <TextBlock x:Name="EmptyTitle" Text="A little room to focus." FontSize="22" HorizontalAlignment="Center" />
-       <TextBlock x:Name="EmptySubtitle" Text="Add your first timer to get started." Style="{StaticResource Muted}" Margin="0,10,0,0" HorizontalAlignment="Center" />
+       <TextBlock x:Name="EmptyTitle" Text="No timers" FontSize="22" HorizontalAlignment="Center" />
+       <TextBlock x:Name="EmptySubtitle" Text="Clear the tag filters to see all timers." Visibility="Collapsed" Style="{StaticResource Muted}" Margin="0,10,0,0" HorizontalAlignment="Center" />
       </StackPanel>
      </Grid>
     </Grid>
    </TabItem>
    <TabItem Header="_Settings">
     <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel>
-     <TextBlock Text="Keep time your way." FontSize="22" FontWeight="SemiBold" Margin="0,0,0,22" />
      <Border Background="{StaticResource PanelBrush}" Padding="18" CornerRadius="7" Margin="0,0,0,14"><StackPanel>
       <CheckBox x:Name="PreserveToggle" Checked="Preserve_Changed" Unchecked="Preserve_Changed" AutomationProperties.AutomationId="PreserveRemaining">
        <TextBlock Text="Pause timers while the app is closed or the PC is asleep." TextWrapping="Wrap" />
@@ -67,7 +61,7 @@
      </StackPanel></Border>
      <Border Background="{StaticResource PanelBrush}" Padding="18" CornerRadius="7" Margin="0,0,0,24"><StackPanel>
       <CheckBox x:Name="StartupToggle" Content="Start with Windows" Checked="Startup_Changed" Unchecked="Startup_Changed" AutomationProperties.AutomationId="StartWithWindows" />
-      <TextBlock Text="Open quietly in the system tray when you sign in. Keep the app folder in the same place after enabling this." TextWrapping="Wrap" Style="{StaticResource Muted}" Margin="24,10,0,0" />
+      <TextBlock Text="Open in the system tray at sign-in. Keep the app folder in the same place after enabling this." TextWrapping="Wrap" Style="{StaticResource Muted}" Margin="24,10,0,0" />
      </StackPanel></Border>
      <TextBlock Text="SAVED ON THIS PC" FontSize="11" Foreground="{StaticResource AccentBrush}" />
      <TextBlock x:Name="DataPathText" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,18" />
@@ -76,6 +70,6 @@
     </StackPanel></ScrollViewer>
    </TabItem>
   </TabControl>
-  <TextBlock Grid.Row="3" Text="Closing this window keeps timers running in the tray. Use the tray menu to exit." Style="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="0,16,0,0" />
+  <TextBlock Grid.Row="2" Text="Closing this window keeps timers running in the tray. Use the tray menu to exit." Style="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="0,16,0,0" />
  </Grid>
 </Window>

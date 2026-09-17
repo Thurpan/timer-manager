@@ -69,6 +69,8 @@ Follow the recorded [Off Table reference](https://offtable.works/) interpretatio
 
 The implemented interface has Dashboard and Settings tabs, timer rows, sorting, tag filters and a focused timer editor. It provides keyboard navigation, visible focus and Windows accessibility controls. No separate finished mockup was approved before implementation.
 
+Keep interface text functional: labels, timer status and necessary instructions. Do not add motivational taglines, decorative badges or introductory filler.
+
 ## Deferred scope
 
 Installers, automatic updates, snoozing, repeating schedules, reusable presets, a light theme and additional operating systems remain deferred. Do not add accounts, cloud sync, team management, subscriptions or billing without a new requirement.
