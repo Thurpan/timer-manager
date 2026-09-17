@@ -12,7 +12,7 @@ The first implementation is present. The user approved the implementation plan o
 - Core use and saved state remain local. No remote service or account is required.
 - Multiple timers can run simultaneously, with names and optional tags.
 - The dashboard sorts by remaining time or creation date and filters by tags.
-- Controls include create, pause/resume, restart, delete, dismiss and editing names/tags. Duration changes are available while paused.
+- Controls include create, pause/resume, restart, delete, dismiss and editing names/tags, duration and finish time. Timing changes are available while running or paused.
 - Finished timers produce one desktop notification and one sound when the app can run. Finished state remains visible until the user acts.
 - Closing the main window leaves the app running in the system tray.
 - One global setting controls interruptions for every timer. There are no per-timer overrides.
@@ -45,7 +45,11 @@ Actions and orderly exits save immediately. Preserve mode checkpoints every five
 - Names contain 1 to 120 characters after trimming. Duration input accepts positive whole seconds, with days plus hours, minutes and seconds. Overflow is rejected.
 - Tags are trimmed and deduplicated without case sensitivity. Multiple selected tags use any-tag matching.
 - Default sorting is shortest remaining time, then creation date and stable identifier. Newest sorting uses descending creation date, then identifier.
-- Editing duration while paused replaces both the configured duration and remaining time. Editing only names or tags does not change time.
+- Creation requires a choice of duration or finish time, with both values visible. Duration begins on save; an entered finish stays fixed while the editor is open.
+- Editing either duration or finish updates the other. Duration is the total counted time for the current run; edits preserve elapsed time. Running timers need not be paused first. Editing only names or tags does not change timing.
+- Paused timers stay paused after timing edits. Their displayed finish assumes an immediate resume; a paused duration must exceed time already counted. Preserve-mode finishes are estimates and move when time is excluded.
+- Shortening a running timer below elapsed time completes it with the normal alert claim. Extending a finished timer into the future starts it again and rearms its alert.
+- Finish inputs use a local date and 24-hour time, must be in the future and reject invalid or ambiguous daylight-saving times. Calculated durations round up to whole seconds while entered deadlines remain exact.
 - Restart begins the configured duration immediately and clears prior completion state. Restarting an unfinished timer requests confirmation.
 - Dismiss clears a finished timer's attention state without deleting it. Deletion requests confirmation.
 - Simultaneous or overdue completions use one combined notification and one sound.
@@ -62,6 +66,8 @@ Actions and orderly exits save immediately. Preserve mode checkpoints every five
 - An unsigned portable folder for the first build; no installer or automatic update service.
 
 These are the adopted implementation choices. Codex is the development assistant, not the application framework.
+
+Version 1 JSON remains compatible. Completed timers now retain their finish timestamp for later duration edits. Older finished records without that timestamp use their saved duration as elapsed time.
 
 ## Visual direction
 

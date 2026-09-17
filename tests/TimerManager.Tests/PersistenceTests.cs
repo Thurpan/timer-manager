@@ -27,6 +27,44 @@ public sealed class PersistenceTests : IDisposable
     }
 
     [Fact]
+    public void EditedFinishAndCompletedAnchorSurviveRecovery()
+    {
+        var clock = new FakeClock();
+        var engine = new TimerEngine(clock, new());
+        var start = clock.UtcNow;
+        var id = engine.Create("A", TimeSpan.FromMinutes(10), []);
+        clock.Advance(120);
+        engine.Edit(id, "A", [], null, start.AddMinutes(5));
+        var store = new JsonStateStore(directory);
+        store.Save(engine.Snapshot);
+        clock.Advance(240);
+        engine = new TimerEngine(clock, store.Load().State);
+        engine.Advance();
+        Assert.Equal(TimerStatus.Finished, engine.Snapshot.Timers[0].Status);
+        store.Save(engine.Snapshot);
+        engine = new TimerEngine(clock, store.Load().State);
+        engine.Edit(id, "A", [], TimeSpan.FromMinutes(10));
+        Assert.Equal(TimeSpan.FromMinutes(4), engine.Snapshot.Timers[0].Remaining);
+        Assert.Equal(start.AddMinutes(10), engine.Snapshot.Timers[0].DeadlineUtc);
+    }
+
+    [Fact]
+    public void LegacyCompletedTimersWithoutAFinishStillLoadAndCanBeExtended()
+    {
+        var clock = new FakeClock();
+        var engine = new TimerEngine(clock, new());
+        var id = engine.Create("A", TimeSpan.FromMinutes(1), []);
+        clock.Advance(60);
+        engine.Advance();
+        var legacy = engine.Snapshot with { Timers = [engine.Snapshot.Timers[0] with { DeadlineUtc = null }] };
+        var store = new JsonStateStore(directory);
+        store.Save(legacy);
+        engine = new TimerEngine(clock, store.Load().State);
+        engine.Edit(id, "A", [], TimeSpan.FromMinutes(2));
+        Assert.Equal(TimeSpan.FromMinutes(1), engine.Snapshot.Timers[0].Remaining);
+    }
+
+    [Fact]
     public void CorruptPrimaryRecoversBackupAndRetainsDamagedFile()
     {
         var store = new JsonStateStore(directory);

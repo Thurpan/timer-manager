@@ -12,8 +12,9 @@ Download the [v0.1.0 Windows x64 prerelease](https://github.com/Thurpan/timer-ma
 
 Extract the complete `TimerManager` folder from `TimerManager-win-x64.zip`, then open `TimerManager.exe`. Keep its included files together. The package includes its runtime dependencies.
 
-- Create a named timer with days, hours, minutes and seconds. Tags are optional and separated by commas.
-- Pause, resume, restart, edit or delete timers. Change a duration while paused; the new duration replaces the remaining time.
+- Create a named timer by choosing **Duration** or **Finish at**. Both values stay visible. Enter a finish date as `YYYY-MM-DD` and local time as `HH:MM:SS` (24-hour). Tags are optional and separated by commas.
+- Pause, resume, restart, edit or delete timers. While editing, change either duration or finish time; the other updates. Duration includes time already counted, so changing it does not reset the countdown.
+- Running timers can be edited without pausing. Paused timers stay paused and show the estimated finish if resumed now. Shortening a running timer below its elapsed time finishes it; extending a finished timer into the future starts it again.
 - Sort by shortest remaining time or newest creation date. Selected tags match any tag, without case sensitivity.
 - Finished timers produce one notification and one sound. Dismiss clears their attention state; restart and delete remain available.
 - Close the window to keep counting in the tray. Use **Exit** in the tray menu or **Exit Timer Manager** in Settings to stop the app.
@@ -33,6 +34,8 @@ The global Settings toggle is **Pause timers while the app is closed or the PC i
 | Reopen or resume | Recalculate; alert for overdue timers. | Resume counting while Windows is awake. |
 
 Switching modes preserves current remaining time and leaves manually paused timers paused. In default mode, changing the system clock affects deadlines; changing timezone does not. Preserve mode uses the Windows awake-time clock.
+
+When creating by duration, the countdown starts on **Start timer**. When creating by finish time, the selected time stays fixed while the editor is open. Finish times are estimates in preserve mode because sleep or a full exit postpones completion. An entered finish must be in the future. The editor rejects missing or ambiguous local times at daylight-saving transitions. Durations calculated from finish times round up to whole seconds; the selected deadline remains exact.
 
 The app saves timer actions immediately, saves on orderly exit and checkpoints running timers every five seconds in preserve mode. An unexpected termination can restore approximately five seconds of extra remaining time when storage is working normally. A failed or delayed save can increase that gap.
 

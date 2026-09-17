@@ -26,7 +26,7 @@ public sealed class TimerEngine
             if (timer.Status != TimerStatus.Running) return timer;
             var remaining = state.PreserveRemaining ? timer.Remaining - elapsed : timer.DeadlineUtc!.Value - now;
             return remaining <= TimeSpan.Zero
-                ? timer with { Remaining = TimeSpan.Zero, DeadlineUtc = null, Status = TimerStatus.Finished }
+                ? timer with { Remaining = TimeSpan.Zero, DeadlineUtc = timer.DeadlineUtc ?? TimerTiming.Finish(now, remaining), Status = TimerStatus.Finished }
                 : timer with { Remaining = remaining };
         }).ToArray() };
     }
@@ -35,27 +35,65 @@ public sealed class TimerEngine
     {
         Advance();
         duration = TimerInput.Duration(duration);
+        return Add(name, tags, duration, duration, Deadline(duration));
+    }
+
+    public Guid CreateUntil(string name, DateTimeOffset finishUtc, IEnumerable<string> tags)
+    {
+        Advance();
+        var remaining = finishUtc - clock.UtcNow;
+        if (remaining <= TimeSpan.Zero) throw new ArgumentException("Choose a finish time in the future.");
+        return Add(name, tags, TimerInput.Duration(TimerTiming.WholeSeconds(remaining)), remaining, finishUtc);
+    }
+
+    private Guid Add(string name, IEnumerable<string> tags, TimeSpan duration, TimeSpan remaining, DateTimeOffset finishUtc)
+    {
         var timer = new TimerItem
         {
             Name = TimerInput.Name(name), Tags = TimerInput.Tags(tags), Duration = duration,
-            Remaining = duration, CreatedUtc = clock.UtcNow, Status = TimerStatus.Running,
-            DeadlineUtc = state.PreserveRemaining ? null : Deadline(duration)
+            Remaining = remaining, CreatedUtc = clock.UtcNow, Status = TimerStatus.Running,
+            DeadlineUtc = state.PreserveRemaining ? null : finishUtc
         };
         state = state with { Timers = [.. state.Timers, timer] };
         return timer.Id;
     }
 
-    public void Edit(Guid id, string name, IEnumerable<string> tags, TimeSpan? duration)
+    public void Edit(Guid id, string name, IEnumerable<string> tags, TimeSpan? duration, DateTimeOffset? finishUtc = null)
     {
         Advance();
         var timer = Get(id);
-        if (duration is not null && timer.Status != TimerStatus.Paused)
-            throw new InvalidOperationException("Pause this timer before changing its duration.");
-        Replace(timer with
+        var updated = timer with { Name = TimerInput.Name(name), Tags = TimerInput.Tags(tags) };
+        if (duration is not null && finishUtc is not null)
+            throw new ArgumentException("Change duration or finish time, not both in one operation.");
+        if (duration is null && finishUtc is null) { Replace(updated); return; }
+
+        var now = clock.UtcNow;
+        var elapsed = TimerTiming.Elapsed(timer, now, state.PreserveRemaining);
+        TimeSpan remaining;
+        if (finishUtc is { } target)
         {
-            Name = TimerInput.Name(name), Tags = TimerInput.Tags(tags),
-            Duration = duration is null ? timer.Duration : TimerInput.Duration(duration.Value),
-            Remaining = duration ?? timer.Remaining
+            remaining = target - now;
+            if (remaining <= TimeSpan.Zero) throw new ArgumentException("Choose a finish time in the future.");
+            duration = TimerInput.Duration(TimerTiming.WholeSeconds(elapsed + remaining));
+        }
+        else
+        {
+            duration = TimerInput.Duration(duration!.Value);
+            remaining = duration.Value - elapsed;
+        }
+        if (timer.Status == TimerStatus.Paused && remaining <= TimeSpan.Zero)
+            throw new ArgumentException("For a paused timer, duration must be longer than the time already counted.");
+        var finish = TimerTiming.Finish(now, remaining);
+        var status = remaining <= TimeSpan.Zero ? TimerStatus.Finished
+            : timer.Status == TimerStatus.Paused ? TimerStatus.Paused : TimerStatus.Running;
+        var reactivated = timer.Status == TimerStatus.Finished && status == TimerStatus.Running;
+        Replace(updated with
+        {
+            Duration = duration.Value, Remaining = remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero,
+            Status = status,
+            DeadlineUtc = status == TimerStatus.Finished || (status == TimerStatus.Running && !state.PreserveRemaining) ? finish : null,
+            Acknowledged = reactivated ? false : timer.Acknowledged,
+            AlertClaimed = reactivated ? false : timer.AlertClaimed
         });
     }
 
@@ -111,8 +149,7 @@ public sealed class TimerEngine
 
     private DateTimeOffset Deadline(TimeSpan duration)
     {
-        try { return clock.UtcNow.Add(duration); }
-        catch (ArgumentOutOfRangeException) { throw new ArgumentException("The duration is too large for a timer finish date."); }
+        return TimerTiming.Finish(clock.UtcNow, duration);
     }
 
     private TimerItem Get(Guid id) => state.Timers.FirstOrDefault(timer => timer.Id == id)

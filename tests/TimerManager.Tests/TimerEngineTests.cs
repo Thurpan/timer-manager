@@ -90,7 +90,6 @@ public class TimerEngineTests
         var engine = new TimerEngine(clock, new());
         var id = engine.Create("A", TimeSpan.FromSeconds(10), [" Work ", "work", ""]);
         Assert.Equal(["Work"], engine.Snapshot.Timers[0].Tags);
-        Assert.Throws<InvalidOperationException>(() => engine.Edit(id, "B", [], TimeSpan.FromSeconds(20)));
         clock.Advance(3);
         engine.PauseOrResume(id);
         clock.Advance(100);
@@ -98,6 +97,7 @@ public class TimerEngineTests
         Assert.Equal(TimeSpan.FromSeconds(7), engine.Snapshot.Timers[0].Remaining);
         engine.Edit(id, "B", [], TimeSpan.FromSeconds(20));
         Assert.Equal(TimerStatus.Paused, engine.Snapshot.Timers[0].Status);
+        Assert.Equal(TimeSpan.FromSeconds(17), engine.Snapshot.Timers[0].Remaining);
         engine.PauseOrResume(id);
         clock.Advance(21);
         engine.Advance();

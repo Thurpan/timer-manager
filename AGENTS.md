@@ -30,6 +30,8 @@ This is Timer Manager, a local Windows app for managing multiple countdown timer
 - A single global toggle in the Settings tab enables preservation of remaining time during sleep, shutdown or a full app exit.
 - The toggle applies to every timer. Do not introduce a per-timer override without a new requirement.
 - Both modes keep counting when only the window is closed to the tray.
+- Show duration and finish time together. Creation requires a choice of which value to set; editing either value updates the other and preserves counted elapsed time.
+- Allow timing edits while running. Paused timers stay paused, with an estimated finish if resumed now.
 - Follow the calm, minimalist dark visual direction in the project brief.
 
 ## Implementation guidance

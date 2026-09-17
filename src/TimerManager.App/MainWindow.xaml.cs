@@ -94,21 +94,27 @@ public partial class MainWindow : Window
         EmptySubtitle.Visibility = state.Timers.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    private bool Execute(Action<TimerEngine> action)
+    private bool Execute(Action<TimerEngine> action, bool returnValidationToEditor = false)
     {
         try { coordinator.Execute(action); RefreshTimers(); return true; }
+        catch (ArgumentException) when (returnValidationToEditor) { Render(); throw; }
         catch (Exception ex) { ((App)Application.Current).Report($"The change could not be saved: {ex.Message}"); Render(); return false; }
     }
 
     private static Guid Id(object sender) => (Guid)((Button)sender).Tag;
-    private void Add_Click(object sender, RoutedEventArgs e) => new TimerDialog(null, (name, tags, duration) =>
-        Execute(engine => engine.Create(name, duration!.Value, tags))) { Owner = this }.ShowDialog();
+    private void Add_Click(object sender, RoutedEventArgs e) => new TimerDialog(null, coordinator.Engine.Snapshot.PreserveRemaining, (name, tags, duration, finish) =>
+        Execute(engine =>
+        {
+            if (finish is { } target) engine.CreateUntil(name, target, tags);
+            else engine.Create(name, duration!.Value, tags);
+        }, returnValidationToEditor: true)) { Owner = this }.ShowDialog();
 
     private void Edit_Click(object sender, RoutedEventArgs e)
     {
         RefreshTimers();
         var timer = coordinator.Engine.Snapshot.Timers.First(item => item.Id == Id(sender));
-        new TimerDialog(timer, (name, tags, duration) => Execute(engine => engine.Edit(timer.Id, name, tags, duration))) { Owner = this }.ShowDialog();
+        new TimerDialog(timer, coordinator.Engine.Snapshot.PreserveRemaining,
+            (name, tags, duration, finish) => Execute(engine => engine.Edit(timer.Id, name, tags, duration, finish), returnValidationToEditor: true)) { Owner = this }.ShowDialog();
     }
     private void Pause_Click(object sender, RoutedEventArgs e) => Execute(engine => engine.PauseOrResume(Id(sender)));
     private void Restart_Click(object sender, RoutedEventArgs e)

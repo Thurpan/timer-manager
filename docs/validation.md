@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-On 16 September 2026, the Release build passed with no warnings or errors and all 26 core tests passed.
+On 17 September 2026, the Release build passed with no warnings or errors and all 45 core tests passed.
 
 ```powershell
 dotnet build TimerManager.slnx -c Release
@@ -10,6 +10,10 @@ dotnet test tests/TimerManager.Tests/TimerManager.Tests.csproj -c Release
 ```
 
 The tests cover concurrent expiry, saved deadlines, preserve-mode exits and sleep, clock jumps, mode changes, pause/edit/resume/restart/delete/dismiss, overdue batching, tag matching, stable sorting, invalid input, atomic state recovery, damaged and future-version data, missing fields, blocked storage, failed-command rollback, checkpoint recovery and durable alert claims.
+
+The duration/finish editor tests cover creation by either input, time spent in the editor, edits that preserve elapsed time, paused-state retention, sleep exclusion, expiry during editing, rearmed alerts, restart duration, recovery of edited and completed deadlines, older finished records and invalid or ambiguous local finish times.
+
+An isolated WPF host passed 16 editor checks on 17 September. It loaded the production dialog and styles, exercised its controls and save events, and checked creation choices, linked fields, running edits, name-only saves and validation. Rendered creation and edit views were inspected. This host did not access user timers or register notifications; it does not establish keyboard or screen-reader acceptance of the full app.
 
 ## Windows checks
 
@@ -26,7 +30,7 @@ The development host is Windows 11 Pro for Workstations, x64, build 26200. Timer
 | Portable package on this host | Published, compressed, extracted and launched the ZIP. The extracted app loaded existing timers and registered notifications without errors. This is not a separate-PC test. |
 | Notifications | Registered and submitted a completion without an API error after fixing the missing SDK resource. Visible banner delivery and notification-click activation remain unverified. |
 | Sound | Completion invoked the system sound without an exception. Audible output remains unverified. |
-| Timer editor input | Layout inspected. The automation helper could not reliably enter text into the owned modal window; end-to-end editor entry remains a manual check. |
+| Timer editor input | The isolated WPF checks above verify control events and submitted values. End-to-end keyboard entry through the main app's owned modal window remains a manual check. |
 | High display scaling | Per-monitor DPI awareness implemented; checks at 150% and 200% remain pending. |
 | Sleep, hibernation, shutdown and sign-in | Deterministic timing tests pass. Actual OS transitions remain pending in a disposable environment or user-controlled session. |
 | Separate Windows PC | Pending. Windows Sandbox is unavailable on this host; no second Windows environment was available. |
@@ -38,8 +42,9 @@ Markdown structural lint passed using the global policy configuration, which dis
 ## Manual acceptance procedure
 
 1. Extract the ZIP on a Windows 11 x64 PC without developer tools. Open `TimerManager.exe`.
-1. Create a 15-second timer and a two-minute timer, with overlapping tags. Check names, countdowns and any-tag filtering.
-1. Pause one timer. Edit its name without changing its time, then change its duration and resume it.
+1. Create a 15-second timer by duration and a timer with a finish two minutes from now, with overlapping tags. Check both displayed values, names, countdowns and any-tag filtering.
+1. Edit a running timer's duration, then its finish. Confirm that each updates the other and elapsed time is retained. Let a timer expire while its editor is open, then save only its name and verify it stays Finished.
+1. Pause one timer. Edit its name without changing its time, then change its duration and finish. Confirm it stays paused and shows the estimated finish if resumed now. Resume it and check remaining time.
 1. Check shortest-time and newest-created ordering. Confirm deletion and restart prompts.
 1. Let the short timer finish. Check one notification and sound, click the notification, then dismiss the finished timer.
 1. Close the window into the tray. Check that time elapses, then reopen with the tray icon or another launch.
