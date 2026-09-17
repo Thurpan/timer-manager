@@ -45,7 +45,7 @@ Actions and orderly exits save immediately. Preserve mode checkpoints every five
 - Names contain 1 to 120 characters after trimming. Duration input accepts positive whole seconds, with days plus hours, minutes and seconds. Overflow is rejected.
 - Tags are trimmed and deduplicated without case sensitivity. Multiple selected tags use any-tag matching.
 - Default sorting is shortest remaining time, then creation date and stable identifier. Newest sorting uses descending creation date, then identifier.
-- Creation requires a choice of duration or finish time, with both values visible. Duration begins on save; an entered finish stays fixed while the editor is open.
+- Creation requires a choice of duration or finish time. The chosen method exposes editable fields; the other value remains visible as a labelled calculation. Duration begins on save; an entered finish stays fixed while the editor is open.
 - Editing either duration or finish updates the other. Duration is the total counted time for the current run; edits preserve elapsed time. Running timers need not be paused first. Editing only names or tags does not change timing.
 - Paused timers stay paused after timing edits. Their displayed finish assumes an immediate resume; a paused duration must exceed time already counted. Preserve-mode finishes are estimates and move when time is excluded.
 - Shortening a running timer below elapsed time completes it with the normal alert claim. Extending a finished timer into the future starts it again and rearms its alert.
@@ -75,7 +75,13 @@ Follow the recorded [Off Table reference](https://offtable.works/) interpretatio
 
 The implemented interface has Dashboard and Settings tabs, timer rows, sorting, tag filters and a focused timer editor. It provides keyboard navigation, visible focus and Windows accessibility controls. No separate finished mockup was approved before implementation.
 
-Timer rows are compact: name above status and tags, with the countdown and an actions menu on the right. Put pause/resume, restart, edit, delete and applicable dismissal in that menu.
+Timer rows are compact: name above status and tags, with the countdown, timing detail and an actions menu on the right. Put pause/resume, restart, edit, delete and applicable dismissal in that menu. Running rows show a finish time, labelled as estimated in preserve mode; paused rows show remaining and total duration.
+
+The UI critique improvements were authorised on 17 September 2026. Unacknowledged completions use a lime status and left edge; paused and dismissed countdowns are muted. Menus highlight their source row and separate Delete. Confirmations name the timer and initially focus Cancel.
+
+The editor retains both linked input groups while editing. Its counted/remaining status is explicitly a snapshot from opening the dialog. Validation appears beside the affected fields and focuses the first error on submission. Dialogs size to content and scroll within the available work area.
+
+Selected controls use lime with dark marks; focus and text selection follow the palette. Non-interactive headings use muted text. Filtered views display visible/total counts and a Clear action. Settings groups local installation information, provides Open folder and separates full Exit.
 
 Keep interface text functional: labels, timer status and necessary instructions. Do not add motivational taglines, decorative badges or introductory filler.
 

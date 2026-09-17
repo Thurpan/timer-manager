@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Interop;
 using System.Windows.Threading;
 using TimerManager.Core;
 
@@ -40,16 +39,9 @@ public partial class MainWindow : Window
         if (allowStartup && coordinator.Engine.Snapshot.StartWithWindows && !startup.IsEnabled())
             ShowError("Windows startup registration does not match this app location. Turn Start with Windows off and on to register this copy.");
         refresh.Tick += (_, _) => RefreshTimers();
-        SourceInitialized += (_, _) =>
-        {
-            var enabled = 1;
-            _ = DwmSetWindowAttribute(new WindowInteropHelper(this).Handle, 20, ref enabled, sizeof(int));
-        };
+        SourceInitialized += (_, _) => WindowAppearance.Apply(this);
         Closing += (_, e) => { if (!((App)Application.Current).IsExiting) { e.Cancel = true; Hide(); } };
     }
-
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
 
     public void Start() { RefreshTimers(); refresh.Start(); }
     public void Stop() => refresh.Stop();
@@ -65,8 +57,7 @@ public partial class MainWindow : Window
     private void Render()
     {
         var state = coordinator.Engine.Snapshot;
-        SummaryText.Visibility = state.Timers.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
-        SummaryText.Text = $"{state.Timers.Count(t => t.Status == TimerStatus.Running)} running · {state.Timers.Count(t => t.Status == TimerStatus.Paused)} paused · {state.Timers.Count(t => t.Status == TimerStatus.Finished)} finished";
+        SummaryText.Visibility = SortControls.Visibility = state.Timers.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         var tags = state.Timers.SelectMany(timer => timer.Tags).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray();
         if (!tags.SequenceEqual(displayedTags))
         {
@@ -76,19 +67,23 @@ public partial class MainWindow : Window
             foreach (var tag in tags)
             {
                 var check = new CheckBox { Content = tag, IsChecked = selectedTags.Contains(tag), Margin = new Thickness(0, 0, 12, 4) };
-                check.Checked += (_, _) => { selectedTags.Add(tag); Render(); };
-                check.Unchecked += (_, _) => { selectedTags.Remove(tag); Render(); };
+                check.Checked += (_, _) => { if (!rendering) { selectedTags.Add(tag); Render(); } };
+                check.Unchecked += (_, _) => { if (!rendering) { selectedTags.Remove(tag); Render(); } };
                 TagFilters.Children.Add(check);
             }
         }
         var visible = TimerQueries.Select(state.Timers, SortRemaining.IsChecked == true ? TimerSort.Remaining : TimerSort.Newest, selectedTags).ToArray();
+        FilterControls.Visibility = tags.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        ClearFiltersButton.Visibility = selectedTags.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        var totals = $"{state.Timers.Count(t => t.Status == TimerStatus.Running)} running · {state.Timers.Count(t => t.Status == TimerStatus.Paused)} paused · {state.Timers.Count(t => t.Status == TimerStatus.Finished)} finished";
+        SummaryText.Text = selectedTags.Count > 0 ? $"Showing {visible.Length} of {state.Timers.Length} · total: {totals}" : totals;
         var ids = visible.Select(timer => timer.Id).ToHashSet();
         for (var i = Rows.Count - 1; i >= 0; i--) if (!ids.Contains(Rows[i].Id)) Rows.RemoveAt(i);
         for (var i = 0; i < visible.Length; i++)
         {
             var row = Rows.FirstOrDefault(item => item.Id == visible[i].Id);
-            if (row is null) { row = new TimerRow(visible[i]); Rows.Insert(i, row); }
-            else { row.Update(visible[i]); if (Rows.IndexOf(row) != i) Rows.Move(Rows.IndexOf(row), i); }
+            if (row is null) { row = new TimerRow(visible[i], state.PreserveRemaining); Rows.Insert(i, row); }
+            else { row.Update(visible[i], state.PreserveRemaining); if (Rows.IndexOf(row) != i) Rows.Move(Rows.IndexOf(row), i); }
         }
         EmptyPanel.Visibility = visible.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         EmptyTitle.Text = state.Timers.Length == 0 ? "No timers" : "No matching timers";
@@ -103,6 +98,35 @@ public partial class MainWindow : Window
     }
 
     private static Guid Id(object sender) => (Guid)((FrameworkElement)sender).Tag;
+
+    private void ClearFilters_Click(object sender, RoutedEventArgs e)
+    {
+        selectedTags.Clear();
+        rendering = true;
+        foreach (var check in TagFilters.Children.OfType<CheckBox>()) check.IsChecked = false;
+        rendering = false;
+        Render();
+        SortRemaining.Focus();
+    }
+
+    private void TimerMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        var menu = (ContextMenu)sender;
+        if (menu.DataContext is TimerRow row) row.IsMenuOpen = true;
+        menu.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (!menu.IsOpen) return;
+            menu.Focus();
+            menu.Items.OfType<MenuItem>().FirstOrDefault(item => item.Visibility == Visibility.Visible && item.IsEnabled)?.Focus();
+        }), DispatcherPriority.Input);
+    }
+
+    private void TimerMenu_Closed(object sender, RoutedEventArgs e)
+    {
+        var menu = (ContextMenu)sender;
+        if (menu.DataContext is TimerRow row) row.IsMenuOpen = false;
+        if (IsActive) menu.PlacementTarget?.Focus();
+    }
 
     private void TimerActions_Click(object sender, RoutedEventArgs e)
     {
@@ -135,17 +159,23 @@ public partial class MainWindow : Window
     private void Restart_Click(object sender, RoutedEventArgs e)
     {
         var timer = coordinator.Engine.Snapshot.Timers.First(item => item.Id == Id(sender));
-        if (timer.Status != TimerStatus.Finished && MessageBox.Show(this, $"Restart ‘{timer.Name}’ from its full duration?", "Restart timer", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+        if (timer.Status != TimerStatus.Finished && new ConfirmationDialog("Restart timer", $"Restart ‘{timer.Name}’ from its full duration?", "Restart") { Owner = this }.ShowDialog() != true) return;
         Execute(engine => engine.Restart(timer.Id));
     }
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(this, "Delete this timer?", "Delete timer", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-            Execute(engine => engine.Delete(Id(sender)));
+        var timer = coordinator.Engine.Snapshot.Timers.First(item => item.Id == Id(sender));
+        if (new ConfirmationDialog("Delete timer", $"Delete ‘{timer.Name}’? This cannot be undone.", "Delete") { Owner = this }.ShowDialog() == true)
+            Execute(engine => engine.Delete(timer.Id));
     }
     private void Dismiss_Click(object sender, RoutedEventArgs e) => Execute(engine => engine.Dismiss(Id(sender)));
     private void DismissError_Click(object sender, RoutedEventArgs e) => ErrorPanel.Visibility = Visibility.Collapsed;
     private void Exit_Click(object sender, RoutedEventArgs e) => ((App)Application.Current).RequestExit();
+    private void OpenFolder_Click(object sender, RoutedEventArgs e)
+    {
+        try { Process.Start(new ProcessStartInfo(DataPathText.Text) { UseShellExecute = true, Verb = "open" }); }
+        catch (Exception ex) { ShowError($"Could not open the data folder: {ex.Message}"); }
+    }
     private void Sort_Changed(object sender, RoutedEventArgs e) { if (ready) Render(); }
     private void Preserve_Changed(object sender, RoutedEventArgs e)
     {
@@ -172,17 +202,25 @@ public partial class MainWindow : Window
     }
 }
 
-public sealed class TimerRow(TimerItem timer) : INotifyPropertyChanged
+public sealed class TimerRow(TimerItem timer, bool preserve = false) : INotifyPropertyChanged
 {
     private TimerItem item = timer;
+    private bool preserveRemaining = preserve;
+    private bool menuOpen;
+    public bool IsMenuOpen
+    {
+        get => menuOpen;
+        set { if (menuOpen == value) return; menuOpen = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsMenuOpen))); }
+    }
     public Guid Id => item.Id;
     public string Name => item.Name;
     public string Tags => string.Join("  ·  ", item.Tags);
     public bool HasTags => item.Tags.Length > 0;
     public bool CanPause => item.Status != TimerStatus.Finished;
     public bool NeedsAttention => item.Status == TimerStatus.Finished && !item.Acknowledged;
+    public bool IsMuted => item.Status == TimerStatus.Paused || item.Status == TimerStatus.Finished && item.Acknowledged;
     public string PauseLabel => item.Status == TimerStatus.Paused ? "Resume" : "Pause";
-    public string AccessibleCountdown => $"{Name}: {Countdown} remaining";
+    public string AccessibleCountdown => $"{Name}: {StatusText}, {Countdown} remaining. {TimingTooltip}";
     public string AccessibleActions => $"Actions for {Name}";
     public string StatusText => item.Status switch
     {
@@ -190,6 +228,13 @@ public sealed class TimerRow(TimerItem timer) : INotifyPropertyChanged
         TimerStatus.Finished => item.Acknowledged ? "Finished · dismissed" : "Finished",
         _ => "Running"
     };
+    public string TimingDetail => item.Status switch
+    {
+        TimerStatus.Paused => $"{TimerDisplay.Duration(item.Remaining)} left of {TimerDisplay.Duration(item.Duration)}",
+        TimerStatus.Finished => item.DeadlineUtc is { } ended ? $"finished {TimerDisplay.Finish(ended, DateTimeOffset.Now)}" : "",
+        _ => $"{(preserveRemaining ? "est." : "finishes")} {TimerDisplay.Finish(preserveRemaining ? TimerTiming.Finish(DateTimeOffset.UtcNow, item.Remaining) : item.DeadlineUtc!.Value, DateTimeOffset.Now)}"
+    };
+    public string TimingTooltip => $"Total duration: {TimerDisplay.Duration(item.Duration)}. {TimingDetail}";
     public string Countdown
     {
         get
@@ -201,17 +246,20 @@ public sealed class TimerRow(TimerItem timer) : INotifyPropertyChanged
         }
     }
     public event PropertyChangedEventHandler? PropertyChanged;
-    public void Update(TimerItem value)
+    public void Update(TimerItem value, bool preserve = false)
     {
-        if (item == value) return;
+        if (item == value && preserveRemaining == preserve) return;
         var oldCountdown = Countdown;
-        var onlyTime = item with { Remaining = value.Remaining } == value;
+        var onlyTime = item with { Remaining = value.Remaining } == value && preserveRemaining == preserve;
         item = value;
+        preserveRemaining = preserve;
         if (!onlyTime) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
         else if (oldCountdown != Countdown)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Countdown)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AccessibleCountdown)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TimingDetail)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TimingTooltip)));
         }
     }
 }

@@ -10,6 +10,12 @@ namespace TimerManager.App;
 
 public partial class App : Application
 {
+    public App()
+    {
+        // Draw selection behind the text so the opaque accent keeps its charcoal text visible.
+        AppContext.SetSwitch("Switch.System.Windows.Controls.Text.UseAdornerForTextboxSelectionRendering", false);
+    }
+
     private SingleInstance? instance;
     private NotificationService? notifications;
     private Forms.NotifyIcon? tray;

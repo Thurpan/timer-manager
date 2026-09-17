@@ -12,13 +12,16 @@ Download the [v0.1.0 Windows x64 prerelease](https://github.com/Thurpan/timer-ma
 
 Extract the complete `TimerManager` folder from `TimerManager-win-x64.zip`, then open `TimerManager.exe`. Keep its included files together. The package includes its runtime dependencies.
 
-- Create a named timer by choosing **Duration** or **Finish at**. Both values stay visible. Enter a finish date as `YYYY-MM-DD` and local time as `HH:MM:SS` (24-hour). Tags are optional and separated by commas.
+- Create a named timer by choosing **Duration** or **Finish at**. The chosen method has editable fields; the other value appears as a labelled calculation. Enter a finish date as `YYYY-MM-DD` and local time as `HH:MM:SS` (24-hour). Tags are optional and separated by commas.
 - Open the **⋯** menu at the right of each timer to pause/resume, restart, edit or delete it. Finished timers also offer Dismiss until acknowledged. While editing, change either duration or finish time; the other updates. Duration includes time already counted, so changing it does not reset the countdown.
-- Running timers can be edited without pausing. Paused timers stay paused and show the estimated finish if resumed now. Shortening a running timer below its elapsed time finishes it; extending a finished timer into the future starts it again.
-- Sort by shortest remaining time or newest creation date. Selected tags match any tag, without case sensitivity.
-- Finished timers produce one notification and one sound. Dismiss clears their attention state; restart and delete remain available.
+- Running timers can be edited without pausing. The editor shows counted and remaining time **when opened**, alongside the linked total-duration and finish inputs. Paused timers stay paused and label their finish as an estimate if resumed now. Shortening a running timer below its elapsed time finishes it; extending a finished timer into the future starts it again.
+- Sort by shortest remaining time or newest creation date. Selected tags match any tag, without case sensitivity. The summary shows how many timers are visible and retains labelled overall state counts. **Clear** resets the filters; long tag lists wrap and scroll.
+- Running rows show their finish time, labelled **est.** in preserve mode. Paused rows show remaining and total duration. Hover over the timing detail for the total duration.
+- Finished timers produce one notification and one sound. A lime status and left edge mark timers awaiting dismissal. Paused and dismissed countdowns are muted. Dismiss clears the attention state; restart and delete remain available.
+- Delete and unfinished-timer restart confirmations name the timer and default to **Cancel**. Form errors appear beside their fields; submitting an invalid form focuses the first error.
 - Close the window to keep counting in the tray. Use **Exit** in the tray menu or **Exit Timer Manager** in Settings to stop the app.
 - Optionally enable **Start with Windows** in Settings. It opens into the tray at sign-in and is disabled by default.
+- Use **Open folder** in Settings to open the local data directory in Explorer.
 
 Keep the extracted folder in place after enabling startup. To move it, disable startup, exit, move the folder, reopen and enable startup again. Disable startup before removing the app.
 
@@ -60,10 +63,15 @@ $env:PATH = "$env:USERPROFILE\.dotnet;$env:PATH"
 dotnet --version
 dotnet build TimerManager.slnx -c Release
 dotnet test tests/TimerManager.Tests/TimerManager.Tests.csproj -c Release
+dotnet run --project tests/TimerManager.UiChecks -c Release -- artifacts/ui-checks
 dotnet run --project src/TimerManager.App -c Release
 ```
 
 Exit the app before rebuilding its executable. Closing its window only hides it.
+
+The UI check runner requires an interactive Windows desktop. It loads production views with in-memory timer state, without startup registration, tray integration or notifications. It checks control behaviour and writes rendered PNGs to the supplied output directory. Popup focus checks cannot run reliably on a restricted sandbox desktop. See [validation](docs/validation.md) for remaining native checks.
+
+If a restricted build environment cannot start parallel MSBuild workers, add `-m:1` to the build command.
 
 For isolated testing, pass a separate data directory. Windows startup registration is disabled in this mode. Only one app instance runs per Windows user, including diagnostic copies.
 
@@ -90,6 +98,7 @@ The script publishes into a fresh staging folder, includes licences and dependen
 - `src/TimerManager.Core`: timer state, injectable clocks, filtering, persistence and completion coordination.
 - `src/TimerManager.App`: WPF interface and Windows tray, notifications, startup and activation services.
 - `tests/TimerManager.Tests`: deterministic behaviour and storage tests.
+- `tests/TimerManager.UiChecks`: isolated WPF interaction and rendering checks.
 - [Project brief](docs/project-brief.md): confirmed product decisions and deferred scope.
 - [Agent instructions](AGENTS.md): contributor guidance and checks.
 

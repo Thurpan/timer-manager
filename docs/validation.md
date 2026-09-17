@@ -17,6 +17,28 @@ An isolated WPF host passed 16 editor checks on 17 September. It loaded the prod
 
 The compact timer rows passed 17 isolated WPF checks on 17 September. Each row measured 64 logical pixels plus a six-pixel gap. Checks covered one actions button per timer, accessible labels, keyboard focus, menu bindings, pause/resume, dismissal, restart and minimum-width layout. Running and finished menus exposed the appropriate actions. Rendered rows and menus were inspected; confirmation prompts retain their existing handlers.
 
+### UI critique improvements
+
+The UI critique pass on 17 September adds a repeatable Windows check runner at `tests/TimerManager.UiChecks`. It uses the production windows and resource styles, an isolated application host and in-memory timer storage. It does not start tray, notification, startup-registration or single-instance services.
+
+The final Release build passed with zero warnings/errors; all 45 core tests and 66 WPF UI checks passed. Fourteen rendered views were inspected. Markdown structural lint, eight relative document links and the Git whitespace check also passed.
+
+The checks cover creation choices, linked timing edits, counted/remaining snapshots, name-only saves, field errors and focus, past-finish rejection, persistence-failure messages, selected-text legibility, compact rows, menu targeting and focus restoration, visible/total counts, clearing filters, long tag lists, scrollbar paging and the empty state. Confirmation checks cover initial Cancel focus, cancellation and explicit acceptance. Checkbox checks cover unchecked, checked and indeterminate marks.
+
+```powershell
+dotnet build TimerManager.slnx -c Release -m:1
+dotnet test tests/TimerManager.Tests/TimerManager.Tests.csproj -c Release
+dotnet run --project tests/TimerManager.UiChecks -c Release -- artifacts/ui-checks
+```
+
+Use an interactive Windows desktop for the UI runner. A restricted sandbox desktop prevented popup keyboard focus; the same check passed on the normal desktop. Single-worker MSBuild avoids a separate sandbox worker-start failure. Neither workaround changes the app configuration.
+
+Rendered PNGs cover the dashboard, minimum-width layout, filtering, long tag lists, Settings, creation methods, validation, running/paused edits, menu and delete confirmation. Dialogs were also constrained to 480 logical pixels in height to check scrolling and button access. This is not a 150% or 200% display-scaling test.
+
+The existing right-aligned monospaced countdowns already align the `hh:mm:ss` suffix across single- and multi-day timers. No extra day column was added. Actions remain in the far-right menu as required. Section headings, selection controls, scrollbars and confirmations now share the dark palette.
+
+Remaining UI acceptance: physical Enter/Esc and complete keyboard-only operation, screen-reader announcements, actual 150%/200% DPI transitions, hover/pressed presentation and opening Explorer through Settings. Programmatic focus and automation invocation do not establish all of these behaviours.
+
 ## Windows checks
 
 The development host is Windows 11 Pro for Workstations, x64, build 26200. Timer checks use isolated data under `artifacts`. Startup registration was enabled and disabled through a fresh normal session, leaving it disabled with no user timers.

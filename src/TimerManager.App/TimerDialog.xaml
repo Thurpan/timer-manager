@@ -1,36 +1,51 @@
 <Window x:Class="TimerManager.App.TimerDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Style="{StaticResource {x:Type Window}}" Title="Timer" Width="540" Height="730" MinWidth="440" MinHeight="500" WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
- <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="26">
-  <TextBlock x:Name="Heading" Text="Add a timer" FontSize="26" FontWeight="SemiBold" Margin="0,0,0,20" />
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Style="{StaticResource {x:Type Window}}" Title="Add a timer" Width="540" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+ <Window.Resources>
+  <Style x:Key="FieldError" TargetType="TextBlock"><Setter Property="Foreground" Value="{StaticResource ErrorBrush}" /><Setter Property="FontSize" Value="12" /><Setter Property="TextWrapping" Value="Wrap" /><Setter Property="MinHeight" Value="20" /><Setter Property="Margin" Value="0,4,0,0" /><Setter Property="AutomationProperties.LiveSetting" Value="Polite" /></Style>
+ </Window.Resources>
+ <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="26">
+  <TextBlock x:Name="Heading" Text="Add a timer" FontSize="26" FontWeight="SemiBold" Margin="0,0,0,16" />
   <Label Target="{Binding ElementName=NameInput}" Content="_Name" Foreground="{StaticResource TextBrush}" />
-  <TextBox x:Name="NameInput" MaxLength="120" AutomationProperties.AutomationId="TimerName" />
-  <Label Target="{Binding ElementName=TagsInput}" Content="_Tags · separated by commas" Foreground="{StaticResource TextBrush}" Margin="0,14,0,0" />
+  <TextBox x:Name="NameInput" MaxLength="120" TextChanged="Name_Changed" AutomationProperties.AutomationId="TimerName" />
+  <TextBlock x:Name="NameError" Style="{StaticResource FieldError}" />
+  <Label Target="{Binding ElementName=TagsInput}" Content="_Tags · separated by commas" Foreground="{StaticResource TextBrush}" Margin="0,4,0,0" />
   <TextBox x:Name="TagsInput" AutomationProperties.AutomationId="TimerTags" />
-  <StackPanel x:Name="CreateTimingChoice" Margin="0,20,0,0">
+  <StackPanel x:Name="CreateTimingChoice" Margin="0,16,0,0">
    <TextBlock Text="Set timer by" Margin="0,0,0,4" />
-   <WrapPanel>
-    <RadioButton x:Name="ByDuration" Content="_Duration" GroupName="TimingInput" Checked="TimingMode_Changed" AutomationProperties.AutomationId="ByDuration" Margin="0,0,16,0" />
-    <RadioButton x:Name="ByFinish" Content="_Finish at" GroupName="TimingInput" Checked="TimingMode_Changed" AutomationProperties.AutomationId="ByFinish" />
-   </WrapPanel>
+   <Border x:Name="ChoiceBorder" BorderThickness="1" BorderBrush="Transparent" CornerRadius="3">
+    <WrapPanel>
+     <RadioButton x:Name="ByDuration" Content="_Duration" GroupName="TimingInput" Checked="TimingMode_Changed" AutomationProperties.AutomationId="ByDuration" Margin="0,0,16,0" />
+     <RadioButton x:Name="ByFinish" Content="_Finish at" GroupName="TimingInput" Checked="TimingMode_Changed" AutomationProperties.AutomationId="ByFinish" />
+    </WrapPanel>
+   </Border>
+   <TextBlock x:Name="ChoiceError" Style="{StaticResource FieldError}" />
   </StackPanel>
-  <TextBlock Text="Duration" Foreground="{StaticResource AccentBrush}" Margin="0,20,0,8" />
-  <UniformGrid x:Name="DurationInputs" Columns="4">
-   <StackPanel Margin="0,0,8,0"><Label Target="{Binding ElementName=DaysInput}" Content="Days" Foreground="{StaticResource MutedBrush}" /><TextBox x:Name="DaysInput" Text="0" TextChanged="Duration_Changed" AutomationProperties.AutomationId="Days" /></StackPanel>
-   <StackPanel Margin="0,0,8,0"><Label Target="{Binding ElementName=HoursInput}" Content="Hours" Foreground="{StaticResource MutedBrush}" /><TextBox x:Name="HoursInput" Text="0" TextChanged="Duration_Changed" AutomationProperties.AutomationId="Hours" /></StackPanel>
-   <StackPanel Margin="0,0,8,0"><Label Target="{Binding ElementName=MinutesInput}" Content="Minutes" Foreground="{StaticResource MutedBrush}" /><TextBox x:Name="MinutesInput" Text="5" TextChanged="Duration_Changed" AutomationProperties.AutomationId="Minutes" /></StackPanel>
-   <StackPanel><Label Target="{Binding ElementName=SecondsInput}" Content="Seconds" Foreground="{StaticResource MutedBrush}" /><TextBox x:Name="SecondsInput" Text="0" TextChanged="Duration_Changed" AutomationProperties.AutomationId="Seconds" /></StackPanel>
-  </UniformGrid>
-  <TextBlock Text="Finish at · local time" Foreground="{StaticResource AccentBrush}" Margin="0,20,0,8" />
-  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-   <StackPanel Margin="0,0,12,0"><Label Target="{Binding ElementName=FinishDateInput}" Content="Date (YYYY-MM-DD)" Foreground="{StaticResource MutedBrush}" />
-    <TextBox x:Name="FinishDateInput" TextChanged="Finish_Changed" AutomationProperties.AutomationId="FinishDate" /></StackPanel>
-   <StackPanel Grid.Column="1"><Label Target="{Binding ElementName=FinishTimeInput}" Content="Time (HH:MM:SS)" Foreground="{StaticResource MutedBrush}" />
-    <TextBox x:Name="FinishTimeInput" TextChanged="Finish_Changed" AutomationProperties.AutomationId="FinishTime" /></StackPanel>
-  </Grid>
+  <TextBlock x:Name="TimingStatus" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,16,0,0" Visibility="Collapsed" />
+  <StackPanel x:Name="DurationGroup" Margin="0,16,0,0">
+   <TextBlock x:Name="DurationHeading" Text="Duration" Style="{StaticResource Muted}" FontWeight="SemiBold" Margin="0,0,0,6" />
+   <UniformGrid x:Name="DurationInputs" Columns="4">
+    <StackPanel Margin="0,0,8,0"><Label Target="{Binding ElementName=DaysInput}" Content="Days" Foreground="{StaticResource MutedBrush}" /><TextBox x:Name="DaysInput" Text="0" TextChanged="Duration_Changed" AutomationProperties.AutomationId="Days" /></StackPanel>
+    <StackPanel Margin="0,0,8,0"><Label Target="{Binding ElementName=HoursInput}" Content="Hours" Foreground="{StaticResource MutedBrush}" /><TextBox x:Name="HoursInput" Text="0" TextChanged="Duration_Changed" AutomationProperties.AutomationId="Hours" /></StackPanel>
+    <StackPanel Margin="0,0,8,0"><Label Target="{Binding ElementName=MinutesInput}" Content="Minutes" Foreground="{StaticResource MutedBrush}" /><TextBox x:Name="MinutesInput" Text="5" TextChanged="Duration_Changed" AutomationProperties.AutomationId="Minutes" /></StackPanel>
+    <StackPanel><Label Target="{Binding ElementName=SecondsInput}" Content="Seconds" Foreground="{StaticResource MutedBrush}" /><TextBox x:Name="SecondsInput" Text="0" TextChanged="Duration_Changed" AutomationProperties.AutomationId="Seconds" /></StackPanel>
+   </UniformGrid>
+   <TextBlock x:Name="DurationError" Style="{StaticResource FieldError}" />
+  </StackPanel>
+  <StackPanel x:Name="FinishGroup" Margin="0,12,0,0">
+   <TextBlock x:Name="FinishHeading" Text="Finish at · local time" Style="{StaticResource Muted}" FontWeight="SemiBold" Margin="0,0,0,6" />
+   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+    <StackPanel Margin="0,0,12,0"><Label Target="{Binding ElementName=FinishDateInput}" Content="Date (YYYY-MM-DD)" Foreground="{StaticResource MutedBrush}" />
+     <TextBox x:Name="FinishDateInput" TextChanged="Finish_Changed" AutomationProperties.AutomationId="FinishDate" /></StackPanel>
+    <StackPanel Grid.Column="1"><Label Target="{Binding ElementName=FinishTimeInput}" Content="Time (HH:MM:SS)" Foreground="{StaticResource MutedBrush}" />
+     <TextBox x:Name="FinishTimeInput" TextChanged="Finish_Changed" AutomationProperties.AutomationId="FinishTime" /></StackPanel>
+   </Grid>
+   <TextBlock x:Name="FinishError" Style="{StaticResource FieldError}" />
+  </StackPanel>
+  <TextBlock x:Name="DerivedTiming" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" />
   <TextBlock x:Name="DurationHint" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,12,0,0" />
-  <TextBlock x:Name="ValidationText" Foreground="#F1C38B" TextWrapping="Wrap" Margin="0,14,0,0" AutomationProperties.LiveSetting="Polite" />
-  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
-   <Button Content="Cancel" IsCancel="True" Margin="0,0,10,0" /><Button x:Name="SaveButton" Content="Start timer" IsDefault="True" Style="{StaticResource PrimaryButton}" Click="Save_Click" AutomationProperties.AutomationId="SaveTimer" />
+  <TextBlock x:Name="SaveError" Style="{StaticResource FieldError}" Visibility="Collapsed" />
+  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+   <Button x:Name="SaveButton" Content="Start timer" IsDefault="True" Style="{StaticResource PrimaryButton}" Click="Save_Click" AutomationProperties.AutomationId="SaveTimer" Margin="0,0,10,0" /><Button Content="Cancel" IsCancel="True" />
   </StackPanel>
  </StackPanel></ScrollViewer>
 </Window>
