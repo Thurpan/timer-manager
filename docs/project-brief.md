@@ -75,6 +75,8 @@ Follow the recorded [Off Table reference](https://offtable.works/) interpretatio
 
 The implemented interface has Dashboard and Settings tabs, timer rows, sorting, tag filters and a focused timer editor. It provides keyboard navigation, visible focus and Windows accessibility controls. No separate finished mockup was approved before implementation.
 
+Timer rows are compact: name above status and tags, with the countdown and an actions menu on the right. Put pause/resume, restart, edit, delete and applicable dismissal in that menu.
+
 Keep interface text functional: labels, timer status and necessary instructions. Do not add motivational taglines, decorative badges or introductory filler.
 
 ## Deferred scope

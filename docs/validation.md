@@ -15,6 +15,8 @@ The duration/finish editor tests cover creation by either input, time spent in t
 
 An isolated WPF host passed 16 editor checks on 17 September. It loaded the production dialog and styles, exercised its controls and save events, and checked creation choices, linked fields, running edits, name-only saves and validation. Rendered creation and edit views were inspected. This host did not access user timers or register notifications; it does not establish keyboard or screen-reader acceptance of the full app.
 
+The compact timer rows passed 17 isolated WPF checks on 17 September. Each row measured 64 logical pixels plus a six-pixel gap. Checks covered one actions button per timer, accessible labels, keyboard focus, menu bindings, pause/resume, dismissal, restart and minimum-width layout. Running and finished menus exposed the appropriate actions. Rendered rows and menus were inspected; confirmation prompts retain their existing handlers.
+
 ## Windows checks
 
 The development host is Windows 11 Pro for Workstations, x64, build 26200. Timer checks use isolated data under `artifacts`. Startup registration was enabled and disabled through a fresh normal session, leaving it disabled with no user timers.

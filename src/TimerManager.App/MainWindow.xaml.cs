@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using TimerManager.Core;
@@ -101,7 +102,21 @@ public partial class MainWindow : Window
         catch (Exception ex) { ((App)Application.Current).Report($"The change could not be saved: {ex.Message}"); Render(); return false; }
     }
 
-    private static Guid Id(object sender) => (Guid)((Button)sender).Tag;
+    private static Guid Id(object sender) => (Guid)((FrameworkElement)sender).Tag;
+
+    private void TimerActions_Click(object sender, RoutedEventArgs e)
+    {
+        var button = (Button)sender;
+        var menu = button.ContextMenu;
+        menu.PlacementTarget = button;
+        menu.Placement = PlacementMode.Custom;
+        menu.CustomPopupPlacementCallback = (popup, target, _) =>
+        [
+            new(new Point(target.Width - popup.Width, target.Height + 4), PopupPrimaryAxis.Vertical),
+            new(new Point(target.Width - popup.Width, -popup.Height - 4), PopupPrimaryAxis.Vertical)
+        ];
+        menu.IsOpen = true;
+    }
     private void Add_Click(object sender, RoutedEventArgs e) => new TimerDialog(null, coordinator.Engine.Snapshot.PreserveRemaining, (name, tags, duration, finish) =>
         Execute(engine =>
         {
@@ -163,10 +178,12 @@ public sealed class TimerRow(TimerItem timer) : INotifyPropertyChanged
     public Guid Id => item.Id;
     public string Name => item.Name;
     public string Tags => string.Join("  ·  ", item.Tags);
+    public bool HasTags => item.Tags.Length > 0;
     public bool CanPause => item.Status != TimerStatus.Finished;
     public bool NeedsAttention => item.Status == TimerStatus.Finished && !item.Acknowledged;
     public string PauseLabel => item.Status == TimerStatus.Paused ? "Resume" : "Pause";
     public string AccessibleCountdown => $"{Name}: {Countdown} remaining";
+    public string AccessibleActions => $"Actions for {Name}";
     public string StatusText => item.Status switch
     {
         TimerStatus.Paused => "Paused",

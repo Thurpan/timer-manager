@@ -13,7 +13,7 @@ Download the [v0.1.0 Windows x64 prerelease](https://github.com/Thurpan/timer-ma
 Extract the complete `TimerManager` folder from `TimerManager-win-x64.zip`, then open `TimerManager.exe`. Keep its included files together. The package includes its runtime dependencies.
 
 - Create a named timer by choosing **Duration** or **Finish at**. Both values stay visible. Enter a finish date as `YYYY-MM-DD` and local time as `HH:MM:SS` (24-hour). Tags are optional and separated by commas.
-- Pause, resume, restart, edit or delete timers. While editing, change either duration or finish time; the other updates. Duration includes time already counted, so changing it does not reset the countdown.
+- Open the **⋯** menu at the right of each timer to pause/resume, restart, edit or delete it. Finished timers also offer Dismiss until acknowledged. While editing, change either duration or finish time; the other updates. Duration includes time already counted, so changing it does not reset the countdown.
 - Running timers can be edited without pausing. Paused timers stay paused and show the estimated finish if resumed now. Shortening a running timer below its elapsed time finishes it; extending a finished timer into the future starts it again.
 - Sort by shortest remaining time or newest creation date. Selected tags match any tag, without case sensitivity.
 - Finished timers produce one notification and one sound. Dismiss clears their attention state; restart and delete remain available.
