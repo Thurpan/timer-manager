@@ -1,10 +1,11 @@
-Timer Manager
+Timer Manager v0.2.0
 
 Extract the entire TimerManager folder, then open TimerManager.exe.
 Keep all included files together. No .NET installation is required.
 Windows 11 x64 is the initial verification target.
 
-Create a timer by choosing Duration or Finish at. Both values remain visible.
+Create a timer by choosing Duration or Finish at. Edit the chosen value and see
+the other as a labelled calculation.
 When editing, changing either updates the other. Duration includes time already
 counted. Running timers keep running; paused timers stay paused and show an
 estimated finish if resumed now. Finish inputs use local date and 24-hour time.
