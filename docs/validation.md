@@ -1,5 +1,31 @@
 # Validation
 
+## 5 October 2026 recheck
+
+The v0.2.0 source passed the Release build with zero warnings or errors. All 45 core tests and 66 isolated WPF checks passed. All 14 rendered PNGs decoded successfully and were visually inspected.
+
+```powershell
+dotnet build TimerManager.slnx -c Release -m:1
+dotnet test tests/TimerManager.Tests/TimerManager.Tests.csproj -c Release
+dotnet run --project tests/TimerManager.UiChecks -c Release -- artifacts/acceptance-2026-10-05/ui-checks
+```
+
+The published ZIP was downloaded from the v0.2.0 release. Its 91,601,459-byte archive matched both the checksum sidecar and the GitHub asset digest:
+
+```text
+4b9747d958c15bcefb120e38e86cc44114299eeaefe57dce8d6cff713207ff17
+```
+
+The extracted package included the executable, icon, MIT licence, portable instructions, notification SDK resource and ten dependency-notice files. It launched with a new diagnostic data directory. The dashboard and owned creation dialog displayed successfully.
+
+The keyboard probe opened the editor using Alt+D, Tab and Enter. The Windows automation helper did not reliably deliver further input to the owned editor. This does not establish complete keyboard acceptance or an application defect.
+
+Desktop automation stopped before the remaining native checks completed. Visible notifications, audible sound, notification-click activation, complete keyboard operation, screen-reader announcements, display-scaling transitions and opening Explorer remain unverified.
+
+The user requested that actual sleep, hibernation, shutdown, restart, sign-in and separate-PC checks remain pending because no suitable test environment was available. Those checks were not attempted.
+
+The isolated test process was stopped. Existing user timer files and startup registration matched their pre-test baseline. Local evidence remains under `artifacts/acceptance-2026-10-05`; it is not part of the published package. The release remains a prerelease.
+
 ## Automated checks
 
 On 17 September 2026, the Release build passed with no warnings or errors and all 45 core tests passed.
